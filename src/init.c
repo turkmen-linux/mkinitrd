@@ -295,6 +295,18 @@ static void run_scripts(const char *script_dir, const char *script_phase) {
     }
 }
 
+static void mdev_daemon(){
+    pid_t pid = fork();
+    if (getpid() > 1) {
+        execlp("/bin/busybox", "mdev", "-d", "-f", NULL);
+        perror("Failed to exec script");
+        exit(1);
+    } else if (pid < 0) {
+        perror("Fork failed");
+        create_shell();
+    }
+}
+
 int main(int argc, char** argv) {
     (void)argc; (void)argv;
     // Check pid 1
@@ -371,6 +383,14 @@ int main(int argc, char** argv) {
     if(getenv("init")){
         init = getenv("init");
     }
+
+    // Load late modules
+    modprobe();
+    // mdev daemon
+    if(getenv("mdev")){
+        mdev_daemon();
+    }
+
     char* args[] = {init,NULL};
     // Execute init
     execv(init, args);
