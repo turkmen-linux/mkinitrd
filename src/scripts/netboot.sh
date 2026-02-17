@@ -6,28 +6,23 @@ init_top(){
             udhcpc -b -i $dev || true
         fi
     done
-    if [ "${root#NBD=}" != "$root" ]; then
-        mount_nbd
-        root="/dev/nbd0"
-        [ "${nbdroot}" != "" ] || root="${nbdroot}"
-    fi
-    [ "$rootfstype" == "" ] || rootfstype=auto
-    [ "$rootflags" == "" ]  || rootflags="ro"
-    if [ -b "$root" ] ; then
-        mkdir -p /rootfs
-        mount -t $rootfstype $root -o $rootflags /rootfs
+    if [ "${nbd}" != "" ]; then
+        connect_nbd
     fi
 }
 
+# example cmdline:
+# root=/dev/nbd0p1 nbd=192.168.1.31:10809
+
 mount_nbd(){
-    modprobe nbd
-    port=${root#*:}
-    root=${root#NBD=}
-    root=${root%:*}
+    # TODO: add multiple nbd support
+    modprobe nbd nbds_max=1
+    port=${nbd#*:}
+    host=${nbd%:*}
     if [ "$port" == "" ] || [ "$port" == "$root" ] ;then
         port="10809"
     fi
-    nbd-client "${root#NBD=}" /dev/nbd0 -p $port
+    nbd-client $host /dev/nbd0 -p $port
 }
 
 init_bottom(){
