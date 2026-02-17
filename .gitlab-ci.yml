@@ -42,7 +42,7 @@ alpine:
     - ninja -C build install
 
 turkman:
-  image: registry.gitlab.com/turkman/devel/assets/docker-images
+  image: registry.gitlab.com/turkmen-linux/devel/assets/docker-images
   stage: build
   artifacts:
     expire_in: 1 week
