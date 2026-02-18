@@ -12,8 +12,6 @@
 #include <signal.h>
 
 extern void modprobe();
-extern char* find_uuid(const char* uuid);
-
 
 static void create_shell() {
     fprintf(stderr, "\033[31;1mBoot failed!\033[;0m Creating debug shell as PID: 1\n");
@@ -257,9 +255,9 @@ static int compare(const void *a, const void *b) {
 
 static void cgroup_add(const char* name){
     char cgroup_path[1024];
-    snprintf(cgroup_path, sizeof(cgroup_path), "/sys/fs/cgroup/mkinitrd-%s", name);
+    snprintf(cgroup_path, sizeof(cgroup_path), "/sys/fs/cgroup/initrd-%s", name);
     create_dir_if_not_exists(cgroup_path);
-    snprintf(cgroup_path, sizeof(cgroup_path), "/sys/fs/cgroup/mkinitrd-%s/cgroup.procs", name);
+    snprintf(cgroup_path, sizeof(cgroup_path), "/sys/fs/cgroup/initrd-%s/cgroup.procs", name);
     FILE* cg = fopen(cgroup_path, "a");
     if (cg == NULL) {
         perror("Error opening cgroup.procs file");
@@ -271,7 +269,7 @@ static void cgroup_add(const char* name){
 
 static void cgroup_destroy(const char* name) {
     char cgroup_path[1024];
-    snprintf(cgroup_path, sizeof(cgroup_path), "/sys/fs/cgroup/mkinitrd-%s/cgroup.kill", name);
+    snprintf(cgroup_path, sizeof(cgroup_path), "/sys/fs/cgroup/initrd-%s/cgroup.kill", name);
     FILE* cg = fopen(cgroup_path, "a");
     if (cg == NULL) {
         perror("Error opening cgroup.procs file");
@@ -279,7 +277,12 @@ static void cgroup_destroy(const char* name) {
     }
     fprintf(cg,"%d", 1);
     fclose(cg);
-    rmdir(cgroup_path);
+    snprintf(cgroup_path, sizeof(cgroup_path), "/sys/fs/cgroup/initrd-%s/", name);
+    if (rmdir(cgroup_path) != 0) {
+        puts(cgroup_path);
+        perror("rmdir");
+    }
+    
 }
 
 static void run_scripts(const char *script_dir, const char *script_phase) {
