@@ -422,6 +422,13 @@ int main(int argc, char** argv) {
     if(getenv("mdev")){
         mdev_daemon();
     }
+    // kill all process except pid1
+    FILE *f = fopen("/proc/sysnq-trigger", "w");
+    if(f){
+        fprintf(f, "%s\n", "_iu");
+        fclose(f);
+    }
+
 
     char* args[] = {init,NULL};
     // Execute init
