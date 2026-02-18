@@ -20,6 +20,7 @@ executable('init', srcs, install_dir:'/etc/initrd', install: true)
 
 install_subdir('src/hooks/', install_dir: '/etc/initrd/')
 install_subdir('src/scripts/', install_dir: '/etc/initrd/')
+install_subdir('data/', install_dir: '/etc/initrd/')
 foreach file : files
     install_data('src'/file, install_dir: '/etc/initrd/')
 endforeach

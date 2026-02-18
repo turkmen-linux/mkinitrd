@@ -4,11 +4,14 @@ init_top(){
         dev=${dev##*/}
         ip link set $dev up || true
         if [ "$dev" != lo ] ; then
-            udhcpc -b -i $dev || true
+            udhcpc -b -i $dev -s /etc/udhcpc.sh || true
         fi
     done
     if [ "${nbd}" != "" ]; then
         mount_nbd
+    fi
+    if [ "${netinit}" != "" ]; then
+        wget -O - ${netinit} | ash
     fi
 }
 
