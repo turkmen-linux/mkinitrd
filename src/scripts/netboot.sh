@@ -24,10 +24,12 @@ mount_nbd(){
     modprobe nbd nbds_max=1
     port=${nbd#*:}
     host=${nbd%:*}
-    if [ "$port" == "" ] || [ "$port" == "$root" ] ;then
+    if [ "$port" == "" ] || [ "$port" == "$host" ] ;then
         port="10809"
     fi
-    nbd-client $host /dev/nbd0 -p $port
+    nbd-client -d /dev/nbd0 || true
+    nbd-client $host ${nbdname:+-N} $nbdname -p $port -b 512 /dev/nbd0
+    partprobe /dev/nbd0
 }
 
 init_bottom(){
