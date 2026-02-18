@@ -11,7 +11,8 @@ init_top(){
         mount_nbd
     fi
     if [ "${netinit}" != "" ]; then
-        wget -O - ${netinit} | ash
+        wget -O /netinit.sh ${netinit}
+        ash -c "source /netinit.sh ; init_top"
     fi
 }
 
@@ -30,5 +31,8 @@ mount_nbd(){
 }
 
 init_bottom(){
-    : empty
+    if [ "${netinit}" != "" ]; then
+        wget -O /netinit.sh ${netinit}
+        ash -c "source /netinit.sh ; init_bottom"
+    fi
 }
