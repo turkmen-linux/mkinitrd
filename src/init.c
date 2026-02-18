@@ -183,6 +183,9 @@ static void mount_virtual_filesystems() {
     if (mount("proc", "/proc", "proc", 0, "hidepid=2,gid=31") == -1) {
         perror("Failed to mount proc");
     }
+    if (mount("cgroup2", "/sys/fs/cgroup", "cgroup2", 0, NULL) == -1) {
+        perror("Failed to mount cgroup");
+    }
 }
 
 static void move_virtual_filesystems() {
@@ -252,6 +255,33 @@ static int compare(const void *a, const void *b) {
     return strcmp(*(const char **)a, *(const char **)b);
 }
 
+static void cgroup_add(const char* name){
+    char cgroup_path[1024];
+    snprintf(cgroup_path, sizeof(cgroup_path), "/sys/fs/cgroup/mkinitrd-%s", name);
+    create_dir_if_not_exists(cgroup_path);
+    snprintf(cgroup_path, sizeof(cgroup_path), "/sys/fs/cgroup/mkinitrd-%s/cgroup.procs", name);
+    FILE* cg = fopen(cgroup_path, "a");
+    if (cg == NULL) {
+        perror("Error opening cgroup.procs file");
+        return;
+    }
+    fprintf(cg,"%d", getpid());
+    fclose(cg);
+}
+
+static void cgroup_destroy(const char* name) {
+    char cgroup_path[1024];
+    snprintf(cgroup_path, sizeof(cgroup_path), "/sys/fs/cgroup/mkinitrd-%s/cgroup.kill", name);
+    FILE* cg = fopen(cgroup_path, "a");
+    if (cg == NULL) {
+        perror("Error opening cgroup.procs file");
+        return;
+    }
+    fprintf(cg,"%d", 1);
+    fclose(cg);
+    rmdir(cgroup_path);
+}
+
 static void run_scripts(const char *script_dir, const char *script_phase) {
     DIR *dir = opendir(script_dir);
     if (dir) {
@@ -274,6 +304,7 @@ static void run_scripts(const char *script_dir, const char *script_phase) {
             printf("\033[32;1mRunning:\033[;0m %s\n", modules[i]);
             pid_t pid = fork();
             if (getpid() > 1) {
+                cgroup_add(modules[i]);
                 execlp("/bin/busybox", "busybox", "ash", "-c", script, NULL);
                 perror("Failed to exec script");
                 exit(1);
@@ -282,6 +313,7 @@ static void run_scripts(const char *script_dir, const char *script_phase) {
                 create_shell();
             }
             waitpid(pid, &status, 0);
+            cgroup_destroy(modules[i]);
             if (WEXITSTATUS(status) != 0) {
                 create_shell();
             }
