@@ -1,13 +1,14 @@
 init_top(){
     # busybox networking
     for dev in /sys/class/net/* ; do
+        dev=${dev##*/}
         ip link set $dev up || true
         if [ "$dev" != lo ] ; then
             udhcpc -b -i $dev || true
         fi
     done
     if [ "${nbd}" != "" ]; then
-        connect_nbd
+        mount_nbd
     fi
 }
 
