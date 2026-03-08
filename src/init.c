@@ -429,11 +429,11 @@ int main(int argc, char** argv) {
     // kill all process except pid1
     FILE *f = fopen("/proc/sysrq-trigger", "w");
     if(f){
-        fprintf(f, "%s\n", "_iu");
+        fprintf(f, "%s\n", "_si");
         fclose(f);
     }
 
-    char* args[] = {init,NULL};
+    char* args[] = {init, NULL};
     // Execute init
     execv(init, args);
     perror("Failed to exec /sbin/init");
