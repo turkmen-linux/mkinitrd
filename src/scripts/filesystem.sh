@@ -14,7 +14,7 @@ function get_part(){
 }
 
 function init_top(){
-    for mod in sd_mod sr_mod nvme usb-storage ; do
+    for mod in mmc_block sd_mod sr_mod nvme usb-storage ; do
         modprobe $mod || true
     done
     if [ "${root#UUID=}" != "$root" ]; then
