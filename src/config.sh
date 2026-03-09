@@ -1,6 +1,6 @@
 #!/bin/sh
 # Hook order
-hooks="base modules filesystem privacy"
+hooks="base modules filesystem privacy zram"
 # Module list
 # * most = copy all storage and filesystem modules
 # * dep = copy all modules used by current system
