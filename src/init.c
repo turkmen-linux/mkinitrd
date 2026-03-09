@@ -196,12 +196,15 @@ static void move_virtual_filesystems() {
     if (mount("/proc", "/rootfs/proc", NULL, MS_MOVE, NULL) == -1) {
         perror("Failed to move mount /proc");
     }
+    create_dir_if_not_exists("/rootfs/run");
     if (mount("tmpfs", "/rootfs/run", "tmpfs", MS_NOSUID | MS_NOEXEC | MS_NODEV, NULL) == -1) {
         perror("Failed to mount run");
     }
+    create_dir_if_not_exists("/rootfs/tmp");
     if (mount("tmpfs", "/rootfs/tmp", "tmpfs", MS_NOSUID | MS_NOEXEC | MS_NODEV, NULL) == -1) {
         perror("Failed to mount tmp");
     }
+    create_dir_if_not_exists("/rootfs/dev/shm");
     if (mount("tmpfs", "/rootfs/dev/shm", "tmpfs", MS_NOSUID | MS_NOEXEC | MS_NODEV, NULL) == -1) {
         perror("Failed to mount tmp");
     }
