@@ -17,11 +17,10 @@ static void create_shell() {
     fprintf(stderr, "\033[31;1mBoot failed!\033[;0m Creating debug shell as PID: 1\n");
 
     // Redirect stdout, stderr, stdin to /dev/console
-    FILE *rc;
-    rc = freopen("/dev/console", "w", stdout);
-    rc = freopen("/dev/console", "w", stderr);
-    rc = freopen("/dev/console", "r", stdin);
-    (void)rc;
+    FILE* rcout = freopen("/dev/console", "w", stdout);
+    FILE* rcerr = freopen("/dev/console", "w", stderr);
+    FILE* rcin = freopen("/dev/console", "r", stdin);
+    (void)rcout; (void)rcerr;  (void)rcin;
 
     // Start a new shell (ash in this case)
     execlp("/bin/busybox", "ash", NULL);
@@ -50,9 +49,8 @@ static void connect_signal(){
         create_shell();
     }
 }
-
+static struct stat st;
 static void mount_root(const char *root) {
-    struct stat st;
     char* rootfs = (char*)root;
     if (stat("/rootfs", &st) == -1) {
         mkdir("/rootfs", 0755);
@@ -88,7 +86,6 @@ static void mount_root(const char *root) {
         (void)rc;
     }
 }
-static struct stat st;
 #define create_dir_if_not_exists(A) \
     if (stat(A, &st) == -1) { \
         if (mkdir(A, 0755) == -1) { \
@@ -123,7 +120,7 @@ static int remove_directory(const char *path) {
     if(is_mount_point(path)){
         return 0;
     }
-    struct dirent *entry;
+    const struct dirent *entry;
     DIR *dp = opendir(path);
     if (dp == NULL) {
         perror("opendir");
@@ -230,7 +227,7 @@ static void parse_kernel_cmdline() {
             // Split by space
             char *token = strtok(line, " ");
             while (token != NULL) {
-                char *val = strstr(token, "=");
+                const char *val = strstr(token, "=");
                 if (val != NULL && val - token > 0) {
                     token[val - token] = '\0';
                     char *key = strdup(token);
@@ -285,17 +282,17 @@ static void cgroup_destroy(const char* name) {
         puts(cgroup_path);
         perror("rmdir");
     }
-    
+
 }
 
 static void run_scripts(const char *script_dir, const char *script_phase) {
     DIR *dir = opendir(script_dir);
     if (dir) {
         char script[1024];
-        char *modules[1024];
+        char *modules[1024] = {NULL};
         int status;
         int count = 0;
-        struct dirent *entry;
+        const struct dirent *entry;
         while ((entry = readdir(dir)) != NULL) {
             if (entry->d_name[0] == '.') {
                 continue;  // Skip hidden files
@@ -377,7 +374,6 @@ int main(int argc, char** argv) {
     run_scripts("/scripts", "init_bottom");
 
     // Check Winzort OEM
-    struct stat st;
     if (stat("/sys/firmware/acpi/tables/MSDM", &st) == 0) {
         for(int i=0; i<5;i++){
             printf("\033c");

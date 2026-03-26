@@ -20,7 +20,7 @@ typedef struct {
 } modprobe_t;
 
 static void *modprobe_fn(void *arg) {
-    modprobe_t *m = (modprobe_t *)arg;
+    const modprobe_t *m = (modprobe_t *)arg;
     for (size_t i = m->thread_id; m->aliases[i]; i += m->num_threads) {
         pid_t pid = fork();
         if (pid < 0) {
@@ -29,10 +29,9 @@ static void *modprobe_fn(void *arg) {
         }
         if (pid == 0) {  // Child process
             char *args[] = {"modprobe", "-ab", m->aliases[i], NULL};
-            FILE *nl;
-            nl = freopen("/dev/null", "w", stderr);
-            nl = freopen("/dev/null", "w", stdout);
-            (void)nl;
+            FILE* nlerr = freopen("/dev/null", "w", stderr);
+            FILE* nlout = freopen("/dev/null", "w", stdout);
+            (void)nlerr; (void)nlout;
             execvp(args[0], args);
             perror("execvp failed");
             exit(1);
@@ -60,7 +59,7 @@ void modprobe() {
     waitpid(pid, &status, 0);
 
     DIR *dir;
-    struct dirent *entry;
+    const struct dirent *entry;
     size_t alias_size = 512;
     size_t alias_count = 0;
     char **aliases = malloc(alias_size * sizeof(char *));
@@ -85,7 +84,7 @@ void modprobe() {
         DIR *dir2 = opendir(filepath);
         if (!dir2) continue;
 
-        struct dirent *entry2;
+        const struct dirent *entry2;
         while ((entry2 = readdir(dir2)) != NULL) {
             if (strcmp(entry2->d_name, ".") == 0 || strcmp(entry2->d_name, "..") == 0) {
                 continue;
@@ -102,7 +101,10 @@ void modprobe() {
                     if (strlen(mod) > 0) {
                         if (alias_count >= alias_size) {
                             alias_size += 512;
-                            aliases = realloc(aliases, alias_size * sizeof(char *));
+                            char** tmp = realloc(aliases, alias_size * sizeof(char *));
+                            if(tmp){
+                                aliases = tmp;
+                            }
                             if (!aliases) {
                                 perror("Memory reallocation failed");
                                 fclose(file);
